@@ -1,0 +1,58 @@
+name: Preprocessing Pipeline - Earthquake Data
+
+on:
+  push:
+    paths:
+      - 'earthquake_raw.csv'
+      - 'preprocessing/automate_Ninditya.py'
+  workflow_dispatch:
+
+jobs:
+  preprocess:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run actions/checkout@v3
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python 3.12.7
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12.7'
+
+      - name: Check Env
+        run: |
+          python --version
+          pip --version
+          echo "Runner OS: ${{ runner.os }}"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pandas scikit-learn requests numpy
+
+      - name: Download and preprocess earthquake data
+        run: |
+          cd preprocessing
+          python automate_Ninditya.py
+
+      - name: Verify output
+        run: |
+          python -c "
+          import pandas as pd
+          df = pd.read_csv('preprocessing/earthquake_preprocessing/earthquake_preprocessing.csv')
+          print(f'Shape: {df.shape}')
+          print(f'Columns: {df.columns.tolist()}')
+          print(f'Target distribution: {df[\"significant\"].value_counts().to_dict()}')
+          "
+
+      - name: Commit preprocessed data
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git add preprocessing/earthquake_preprocessing/
+          git add earthquake_raw.csv || true
+          git diff --cached --quiet || git commit -m "Auto-update preprocessed earthquake data [skip ci]"
+          git push
