@@ -38,7 +38,7 @@ jobs:
       - name: Download and preprocess earthquake data
         run: |
           cd preprocessing
-          python automate_Ninditya.py
+          python automate_Ninditya-Salma-Nur-Aini.py
 
       - name: Verify output
         run: |
